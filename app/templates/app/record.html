@@ -1,0 +1,365 @@
+{% extends "app/layout.html" %}
+
+{% load static %}
+
+{% block content %}
+
+<div class="feedback-container">
+    <b>Запись</b>
+    {% if user.is_authenticated %}
+    <form method="post" id="recordForm" class="feedback-form">
+        {% csrf_token %}
+
+        <!-- Выбор мастера -->
+        <div class="form-group">
+            <label for="master">Выберите мастера:</label>
+            <select id="master" name="master" class="btn-default2">
+                <option value="olga_kamenskaya">Ольга Каменская (мастер-парикмахер)</option>
+                <option value="alena_belaya">Алёна Белая (мастер маникюра)</option>
+            </select>
+        </div>
+
+        <!-- Выбор услуги -->
+        <div id="services-container" class="form-group">
+            <label for="service">Выберите услуги:</label>
+            <ul id="services">
+                <!-- Услуги будут добавлены здесь динамически -->
+            </ul>
+        </div>
+
+        <!-- Кнопка для выбора даты -->
+        <div class="form-group">
+            <button type="button" id="date-button" class="btn-default1">Выбрать дату</button>
+        </div>
+
+        <!-- Модальное окно для выбора даты -->
+        <div id="date-modal" class="feedback-container" style="display: none;">
+            <div class="form-group">
+                <label for="month">Месяц:</label>
+                <select id="month" name="month" class="btn-default2">
+                    {% for month in months %}
+                    <option value="{{ forloop.counter }}">{{ month }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="day">День:</label>
+                <select id="day" name="day" class="btn-default2">
+                    <!-- Дни будут добавлены здесь динамически -->
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="button" id="select-date-button" class="btn-default1">Выбрать</button>
+            </div>
+        </div>
+
+        <!-- Выбор времени -->
+        <div class="form-group">
+            <label for="time">Выберите время:</label>
+            <select id="time" name="time" class="btn-default2">
+                {% for hour in hours %}
+                <option value="{{ hour }}">{{ hour }}:00</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Информация о записи -->
+        <div class="form-group">
+            <label for="appointment-info">Информация о записи:</label>
+            <p id="appointment-info">
+                Дата: <span id="selected-date"></span><br>
+                Время: <span id="selected-time"></span><br>
+                Полная сумма: <span id="total-price"></span> руб.<br>
+                Предоплата: <span id="prepayment"></span> руб.
+            </p>
+        </div>
+
+        <!-- Кнопка записаться -->
+        <div class="form-group submit-button">
+            <button type="button" id="record-button" class="btn-default1">Записаться</button>
+        </div>
+    </form>
+    {% else %}
+    <p>Пожалуйста, <a href="{% url 'login' %}">войдите</a>, чтобы записаться.</p>
+    {% endif %}
+</div>
+
+<!-- Модальное окно для подтверждения оплаты -->
+<div id="payment-modal" class="modal">
+    <div class="modal-content">
+        <h2>Подтверждение записи</h2>
+        <p>К оплате: <span id="payment-amount"></span> руб.</p>
+        <div class="qr-code-container">
+            <img src="{% static 'app/content/qr-code.jpg' %}" alt="QR Code" class="qr-code">
+            <button type="button" id="confirm-payment-button" class="btn-default1">Подтвердить оплату</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const masterSelect = document.getElementById('master');
+        const servicesContainer = document.getElementById('services');
+        const prepaymentSpan = document.getElementById('prepayment');
+        const totalPriceSpan = document.getElementById('total-price');
+        const selectedDateSpan = document.getElementById('selected-date');
+        const selectedTimeSpan = document.getElementById('selected-time');
+        const dateButton = document.getElementById('date-button');
+        const dateModal = document.getElementById('date-modal');
+        const monthSelect = document.getElementById('month');
+        const daySelect = document.getElementById('day');
+        const selectDateButton = document.getElementById('select-date-button');
+        const timeSelect = document.getElementById('time');
+        const recordButton = document.getElementById('record-button');
+        const paymentModal = document.getElementById('payment-modal');
+        const paymentAmountSpan = document.getElementById('payment-amount');
+        const confirmPaymentButton = document.getElementById('confirm-payment-button');
+
+        const services = {
+            olga_kamenskaya: [
+                { name: 'Мужские стрижки от простых до модельных', price: 250 },
+                { name: 'Женские стрижки от простых до модельных', price: 250 },
+                { name: 'Окраски разной сложности', price: 700 },
+                { name: 'Прически', price: 700 },
+                { name: 'Плетение кос', price: 250 },
+                { name: 'Детские стрижки и прически', price: 250 },
+                { name: 'Оформление и коррекция бровей (крашивание хной и краской)', price: 500 }
+            ],
+            alena_belaya: [
+                { name: 'Покрытие: лак и гель лак', price: 400 },
+                { name: 'Маникюр: классический, комбинированный, аппаратный и европейский (необрезной)', price: 800 },
+                { name: 'Укрепление натуральных ногтей: акрил и гель', price: 400 },
+                { name: 'Наращивание ногтей', price: 500 },
+                { name: 'Дизайны: фольга, стразы, роспись ручная, слайдеры и прочие', price: 600 }
+            ]
+        };
+
+        function updateServices() {
+            const selectedMaster = masterSelect.value;
+            servicesContainer.innerHTML = '';
+            services[selectedMaster].forEach(service => {
+                const serviceItem = document.createElement('li');
+                serviceItem.classList.add('service-item');
+                serviceItem.innerHTML = `
+                    <label for="service-${service.name}">${service.name} (${service.price} руб.)</label>
+                    <input type="checkbox" id="service-${service.name}" name="services" value="${service.name}" data-price="${service.price}">
+                `;
+                servicesContainer.appendChild(serviceItem);
+            });
+            updatePrepayment();
+        }
+
+        function updatePrepayment() {
+            let totalPrice = 0;
+            const selectedServices = document.querySelectorAll('input[name="services"]:checked');
+            selectedServices.forEach(service => {
+                totalPrice += parseFloat(service.getAttribute('data-price'));
+            });
+            totalPriceSpan.textContent = totalPrice.toFixed(2);
+            const prepayment = totalPrice * 0.25;
+            prepaymentSpan.textContent = prepayment.toFixed(2);
+        }
+
+        function updateDays() {
+            const selectedMonth = parseInt(monthSelect.value);
+            const currentYear = new Date().getFullYear();
+            const daysInMonth = new Date(currentYear, selectedMonth, 0).getDate();
+            daySelect.innerHTML = '';
+            for (let day = 1; day <= daysInMonth; day++) {
+                const option = document.createElement('option');
+                option.value = day;
+                option.textContent = day;
+                daySelect.appendChild(option);
+            }
+        }
+
+        masterSelect.addEventListener('change', updateServices);
+        servicesContainer.addEventListener('change', updatePrepayment);
+
+        dateButton.addEventListener('click', function () {
+            dateModal.style.display = 'block';
+        });
+
+        selectDateButton.addEventListener('click', function () {
+            const selectedDay = daySelect.value;
+            const selectedMonth = monthSelect.options[monthSelect.selectedIndex].textContent;
+            selectedDateSpan.textContent = `${selectedDay} ${selectedMonth.toLowerCase()}`;
+            dateModal.style.display = 'none';
+        });
+
+        timeSelect.addEventListener('change', function () {
+            selectedTimeSpan.textContent = timeSelect.value + ':00';
+        });
+
+        monthSelect.addEventListener('change', updateDays);
+
+        recordButton.addEventListener('click', function () {
+            const prepayment = parseFloat(prepaymentSpan.textContent);
+            paymentAmountSpan.textContent = prepayment.toFixed(2);
+            paymentModal.style.display = 'block';
+        });
+
+        confirmPaymentButton.addEventListener('click', function () {
+            paymentModal.style.display = 'none';
+            alert('Оплата подтверждена!');
+        });
+
+        // Initial update
+        updateServices();
+        updateDays();
+    });
+</script>
+
+<style>
+    .feedback-container {
+        background-color: #ffe6e6; /* Нежно-розовый фон */
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        margin: 20px auto;
+        max-width: 600px;
+    }
+
+    .feedback-form {
+        background-color: #fff; /* Белый фон для формы */
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+            .form-group input[type="submit"] {
+                background-color: #45a049;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                cursor: pointer;
+                font-size: 16px;
+            }
+
+                .form-group input[type="submit"]:hover {
+                    background-color: #45a049;
+                    color: #282828;
+                }
+
+    .submit-button {
+        text-align: left;
+    }
+
+    .btn-default1 {
+        background-color: #45a049;
+        color: white;
+        border: none;
+        padding: 10px;
+        cursor: pointer;
+    }
+
+        .btn-default1:hover {
+            background-color: #45a049;
+            color: #282828;
+        }
+
+    .btn-default2 {
+        background-color: white;
+        color: black;
+        border: 1px solid #ccc;
+        padding: 10px;
+        cursor: pointer;
+    }
+
+        .btn-default2:hover, .btn-default2:focus {
+            background-color: lightgreen;
+            color: #282828;
+        }
+
+    .form-group input:focus {
+        background-color: lightgreen;
+    }
+
+    .form-group select:focus {
+        background-color: lightgreen;
+    }
+
+    .service-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 10px;
+    }
+
+        .service-item label {
+            margin-right: 8px;
+            flex: 1;
+        }
+
+        .service-item input[type="checkbox"] {
+            margin-left: 0;
+            transform: scale(1.5); /* Увеличиваем размер квадратиков выбора */
+        }
+
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.4);
+        padding-top: 60px;
+    }
+
+    .modal-content {
+        background-color: #fff;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 400px;
+        text-align: center;
+        border-radius: 10px;
+    }
+
+    .qr-code-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
+    }
+
+    .qr-code {
+        width: 150px;
+        height: 150px;
+    }
+
+    .modal-content h2 {
+        font-size: 1.5em;
+        margin-bottom: 20px;
+    }
+</style>
+
+{% endblock %}
