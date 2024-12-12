@@ -1,0 +1,100 @@
+{% extends "app/layout.html" %}
+
+{% load static %}
+
+{% block content %}
+<div class="outer-container">
+    <div class="inner-container">
+        <div class="title-container">
+            <b>{{ title }}</b>
+        </div>
+
+        <hr />
+
+        <div class="column">
+            <h2>Процесс окрашивания:</h2>
+            <video class="video" controls width="400" height="300" poster="/media/zastavkaO.jpg">
+                <source src="/media/okrashivanie.mp4" type="video/mp4">
+                Ваш браузер не поддерживает тег video.
+            </video>
+            <p>
+                <br /> На видео показан процесс окрашивания, данная услуга в нашем салоне стоит от 700 рублей, в этом случае <i>1000.</i>
+            </p>
+        </div>
+
+        <hr />
+
+        <div class="column">
+            <h2>Процесс маникюра:</h2>
+            <video class="video" controls width="400" height="300" poster="/media/zastavkaM.jpg">
+                <source src="/media/manik.mp4" type="video/mp4">
+                Ваш браузер не поддерживает тег video.
+            </video>
+            <p>
+                <br /> На видео показан процесс наращивания и покрытия, стоимости данных услуг в нашем салоне начинаются от 500 и 400 рублей соответственно, <br />
+                в этом случае общая стоимость работы - <i>1100 рублей.</i>
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .outer-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #ffe6e6; /* Нежно-розовый фон */
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .inner-container {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .title-container {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 24px;
+        color: #333;
+    }
+
+    hr {
+        border: 0;
+        height: 1px;
+        background: #ccc;
+        margin: 20px 0;
+    }
+
+    .column {
+        margin-bottom: 40px;
+    }
+
+        .column h2 {
+            color: #45a049;
+            margin-bottom: 10px;
+        }
+
+    .video {
+        border: 2px solid #ccc;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 15px;
+    }
+
+    .column p {
+        font-size: 16px;
+        line-height: 1.6;
+        color: #555;
+    }
+
+        .column p i {
+            font-style: normal;
+            color: #e91e63;
+        }
+</style>
+
+{% endblock %}

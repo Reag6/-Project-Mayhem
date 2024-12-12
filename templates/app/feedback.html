@@ -1,0 +1,230 @@
+{% extends "app/layout.html" %}
+
+{% load static %}
+
+{% block content %}
+<div class="feedback-container">
+    {% if user.is_authenticated %}
+    {% if form != None %}
+    <br>
+    <b>Пожалуйста, оставьте свой отзыв о нашем салоне</b>
+    <br>
+    <div class="feedback-form">
+        <form id="feedbackForm" method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="{{ form.name.id_for_label }}">{{ form.name.label }}:</label>
+                {{ form.name }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.surname.id_for_label }}">{{ form.surname.label }}:</label>
+                {{ form.surname }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.gender.id_for_label }}">{{ form.gender.label }}:</label>
+                <div class="gender-options">
+                    {% for choice in form.gender %}
+                    <div class="gender-option">
+                        {{ choice.tag }}
+                        <label for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="{{ form.estimation.id_for_label }}">{{ form.estimation.label }}:</label>
+                <div class="estimation-options">
+                    {% for choice in form.estimation %}
+                    <div class="estimation-option">
+                        {{ choice.tag }}
+                        <label for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                {{ form.email }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.message.id_for_label }}">{{ form.message.label }}:</label>
+                {{ form.message }}
+            </div>
+            <div class="form-group submit-button">
+                <input type="submit" value="Отправить">
+            </div>
+        </form>
+    </div>
+    {% else %}
+    <br>
+    <b>Благодарим Вас за оценку!</b>
+    <br>
+    <ul>
+        <li>
+            <span>Вы поставили нам:</span>
+            <span class="estimation">{{ data.estimation }}</span>
+        </li>
+        <li>
+            <span>Ваши предложения и замечания:</span>
+            <div class="message-container">
+                <textarea class="message" readonly>{{ data.message }}</textarea>
+            </div>
+        </li>
+    </ul>
+    {% endif %}
+    {% else %}
+    <b>Оставить Отзыв</b>
+    <p>Пожалуйста, <a href="{% url 'login' %}">войдите</a>, чтобы оставить отзыв.</p>
+    {% endif %}
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('DOM fully loaded and parsed');
+        const form = document.querySelector('form#feedbackForm');
+        if (form) {
+            console.log('Form found:', form);
+            const submitButton = form.querySelector('input[type="submit"]');
+            const inputFields = form.querySelectorAll('input, textarea, select');
+            if (submitButton) {
+                console.log('Submit button found:', submitButton);
+                // Изменение цвета надписи на кнопке при наведении
+                submitButton.addEventListener('mouseover', function () {
+                    console.log('Mouse over submit button');
+                    submitButton.style.color = '#282828'; // color
+                });
+                submitButton.addEventListener('mouseout', function () {
+                    console.log('Mouse out submit button');
+                    submitButton.style.color = '';
+                });
+            } else {
+                console.error('Submit button not found');
+            }
+            if (inputFields.length > 0) {
+                console.log('Input fields found:', inputFields);
+                // Изменение цвета фона полей ввода при фокусе
+                inputFields.forEach(function (field) {
+                    field.addEventListener('focus', function () {
+                        console.log('Focus on input field:', field);
+                        field.style.backgroundColor = 'lightgreen'; // background-color
+                    });
+                    field.addEventListener('blur', function () {
+                        console.log('Blur on input field:', field);
+                        field.style.backgroundColor = '';
+                    });
+                });
+            } else {
+                console.error('No input fields found');
+            }
+        } else {
+            console.error('Form not found');
+        }
+    });
+</script>
+<style>
+    .feedback-container {
+        background-color: #ffe6e6; /* Нежно-розовый фон */
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        margin: 20px auto;
+        max-width: 600px;
+    }
+
+    .feedback-form {
+        background-color: #fff; /* Белый фон для формы */
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+            .form-group input[type="submit"] {
+                background-color: #45a049;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                cursor: pointer;
+                font-size: 16px;
+            }
+
+                .form-group input[type="submit"]:hover {
+                    background-color: #45a049;
+                    color: #282828;
+                }
+
+    .submit-button {
+        text-align: left;
+    }
+
+    .message-container {
+        background-color: #f9f9f9;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        margin-top: 10px;
+    }
+
+    .message {
+        width: 100%;
+        height: 100px;
+        border: none;
+        background-color: #f9f9f9;
+        resize: none;
+    }
+
+    .service-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 10px;
+    }
+
+        .service-item label {
+            margin-left: 8px;
+            flex: 1;
+        }
+
+        .service-item input[type="checkbox"] {
+            margin-left: 0;
+            transform: scale(1.5); /* Увеличиваем размер квадратиков выбора */
+        }
+
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    .gender-options, .estimation-options, .notice-option {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .gender-option, .estimation-option, .notice-option {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+
+        .gender-option label, .estimation-option label, .notice-option label {
+            margin-left: 5px;
+        }
+</style>
+{% endblock %}

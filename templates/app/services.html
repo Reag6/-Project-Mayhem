@@ -1,0 +1,140 @@
+{% extends "app/layout.html" %}
+
+{% block content %}
+
+{% load static %}
+
+<div class="outer-container">
+    <div class="inner-container">
+        <b>Наши услуги</b>
+        <hr />
+        <div class="master-selection">
+            <button class="btn-default1" id="master-olga">Ольга Каменская (мастер-парикмахер)</button>
+            <button class="btn-default1" id="master-alena">Алёна Белая (мастер маникюра)</button>
+        </div>
+        <div id="services-container">
+            <!-- Услуги будут добавлены здесь динамически -->
+        </div>
+    </div>
+</div>
+
+<div class="button-container">
+    <a class="btn-default1" href="{% url 'record' %}">Записаться &raquo;</a>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const servicesContainer = document.getElementById('services-container');
+        const masterOlgaButton = document.getElementById('master-olga');
+        const masterAlenaButton = document.getElementById('master-alena');
+
+        const services = {
+            olga_kamenskaya: [
+                { name: 'Мужские стрижки от простых до модельных', price: 250 },
+                { name: 'Женские стрижки от простых до модельных', price: 250 },
+                { name: 'Окраски разной сложности', price: 700 },
+                { name: 'Прически', price: 700 },
+                { name: 'Плетение кос', price: 250 },
+                { name: 'Детские стрижки и прически', price: 250 },
+                { name: 'Оформление и коррекция бровей (крашивание хной и краской)', price: 500 }
+            ],
+            alena_belaya: [
+                { name: 'Покрытие: лак и гель лак', price: 400 },
+                { name: 'Маникюр: классический, комбинированный, аппаратный и европейский (необрезной)', price: 800 },
+                { name: 'Укрепление натуральных ногтей: акрил и гель', price: 400 },
+                { name: 'Наращивание ногтей', price: 500 },
+                { name: 'Дизайны: фольга, стразы, роспись ручная, слайдеры и прочие', price: 600 }
+            ]
+        };
+
+        function displayServices(master) {
+            servicesContainer.innerHTML = '';
+            const masterServices = services[master];
+            const title = document.createElement('h2');
+            title.textContent = master === 'olga_kamenskaya' ? 'Парикмахер-универсал:' : 'Сертифицированный мастер маникюра:';
+            servicesContainer.appendChild(title);
+            const ul = document.createElement('ul');
+            masterServices.forEach(service => {
+                const li = document.createElement('li');
+                li.textContent = `${service.name} - ${service.price} рублей`;
+                ul.appendChild(li);
+            });
+            servicesContainer.appendChild(ul);
+        }
+
+        masterOlgaButton.addEventListener('click', function () {
+            displayServices('olga_kamenskaya');
+        });
+
+        masterAlenaButton.addEventListener('click', function () {
+            displayServices('alena_belaya');
+        });
+    });
+</script>
+
+<style>
+    .outer-container {
+        background-color: #ffe6e6; /* Нежно-розовый фон */
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        margin: 20px auto;
+        max-width: 800px;
+    }
+
+    .inner-container {
+        background-color: #fff; /* Белый фон */
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .master-selection {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 20px;
+    }
+
+    .btn-default1 {
+        background-color: #45a049;
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        font-size: 18px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        margin: 10px;
+    }
+
+        .btn-default1:hover {
+            background-color: #45a049;
+            color: #282828;
+        }
+
+    h2 {
+        color: #45a049;
+    }
+
+    hr {
+        border: 0;
+        border-top: 1px solid #ccc;
+        margin: 20px 0;
+    }
+
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    li {
+        margin-bottom: 10px;
+    }
+
+    .button-container {
+        text-align: center;
+        margin-top: 20px;
+    }
+</style>
+
+{% endblock %}
